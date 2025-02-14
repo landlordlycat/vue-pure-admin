@@ -1,27 +1,24 @@
-import { $t } from "/@/plugins/i18n";
-const Layout = () => import("/@/layout/index.vue");
+import { $t } from "@/plugins/i18n";
+import { list } from "@/router/enums";
 
-const ableRouter = {
+export default {
   path: "/list",
-  component: Layout,
   redirect: "/list/card",
   meta: {
-    icon: "list-check",
-    title: $t("menus.hsList"),
-    rank: 12
+    icon: "ri:list-check",
+    title: $t("menus.pureList"),
+    rank: list
   },
   children: [
     {
       path: "/list/card",
-      name: "ListCard",
-      component: () => import("/@/views/list/card/index.vue"),
+      name: "CardList",
+      component: () => import("@/views/list/card/index.vue"),
       meta: {
-        icon: "card",
-        title: $t("menus.hsListCard"),
+        icon: "ri:bank-card-line",
+        title: $t("menus.pureCardList"),
         showParent: true
       }
     }
   ]
-};
-
-export default ableRouter;
+} satisfies RouteConfigsTable;

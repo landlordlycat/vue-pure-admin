@@ -17,6 +17,10 @@ export default defineComponent({
       IconifyIcon,
       {
         icon: `${this.icon}`,
+        "aria-hidden": false,
+        style: attrs?.style
+          ? Object.assign(attrs.style, { outline: "none" })
+          : { outline: "none" },
         ...attrs
       },
       {

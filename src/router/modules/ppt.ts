@@ -1,14 +1,13 @@
-const Layout = () => import("/@/layout/index.vue");
-const IFrame = () => import("/@/layout/frameView.vue");
+import { ppt } from "@/router/enums";
+const IFrame = () => import("@/layout/frame.vue");
 
-const pptRouter = {
+export default {
   path: "/ppt",
-  component: Layout,
   redirect: "/ppt/index",
   meta: {
-    icon: "ppt",
+    icon: "ri:file-ppt-2-line",
     title: "PPT",
-    rank: 3
+    rank: ppt
   },
   children: [
     {
@@ -17,14 +16,10 @@ const pptRouter = {
       component: IFrame,
       meta: {
         title: "PPT",
+        keepAlive: true,
         frameSrc: "https://pipipi-pikachu.github.io/PPTist/",
-        extraIcon: {
-          svg: true,
-          name: "team-iconxinpin"
-        }
+        frameLoading: false
       }
     }
   ]
-};
-
-export default pptRouter;
+} satisfies RouteConfigsTable;

@@ -1,25 +1,27 @@
-import { $t } from "/@/plugins/i18n";
-const Layout = () => import("/@/layout/index.vue");
+import { $t } from "@/plugins/i18n";
+import { formdesign } from "@/router/enums";
+const IFrame = () => import("@/layout/frame.vue");
 
-const formDesignRouter = {
-  path: "/formDesign",
-  component: Layout,
-  redirect: "/formDesign/index",
+export default {
+  path: "/form-design",
+  redirect: "/form-design/index",
   meta: {
-    icon: "terminal-window-line",
-    title: $t("menus.hsFormDesign"),
-    rank: 2
+    icon: "ri:terminal-window-line",
+    title: $t("menus.pureFormDesign"),
+    rank: formdesign
   },
   children: [
     {
-      path: "/formDesign/index",
+      path: "/form-design/index",
       name: "FormDesign",
-      component: () => import("/@/views/form-design/index.vue"),
+      component: IFrame,
       meta: {
-        title: $t("menus.hsFormDesign")
+        title: $t("menus.pureFormDesign"),
+        keepAlive: true,
+        frameSrc:
+          "https://haixin-fang.github.io/vue-form-design/playground/index.html",
+        frameLoading: false
       }
     }
   ]
-};
-
-export default formDesignRouter;
+} satisfies RouteConfigsTable;

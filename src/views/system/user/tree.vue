@@ -1,9 +1,14 @@
-<script lang="ts" setup>
-import type { ElTree } from "element-plus";
-import { getDeptList } from "/@/api/system";
-import { handleTree } from "@pureadmin/utils";
-import { useRenderIcon } from "/@/components/ReIcon/src/hooks";
-import { ref, watch, onMounted, getCurrentInstance } from "vue";
+<script setup lang="ts">
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import { ref, computed, watch, getCurrentInstance } from "vue";
+
+import Dept from "@iconify-icons/ri/git-branch-line";
+// import Reset from "@iconify-icons/ri/restart-line";
+import More2Fill from "@iconify-icons/ri/more-2-fill";
+import OfficeBuilding from "@iconify-icons/ep/office-building";
+import LocationCompany from "@iconify-icons/ep/add-location";
+import ExpandIcon from "./svg/expand.svg?component";
+import UnExpandIcon from "./svg/unexpand.svg?component";
 
 interface Tree {
   id: number;
@@ -11,17 +16,33 @@ interface Tree {
   highlight?: boolean;
   children?: Tree[];
 }
+
+defineProps({
+  treeLoading: Boolean,
+  treeData: Array
+});
+
+const emit = defineEmits(["tree-select"]);
+
+const treeRef = ref();
+const isExpand = ref(true);
+const searchValue = ref("");
+const highlightMap = ref({});
+const { proxy } = getCurrentInstance();
 const defaultProps = {
   children: "children",
   label: "name"
 };
-
-const treeData = ref([]);
-const searchValue = ref("");
-const { proxy } = getCurrentInstance();
-const treeRef = ref<InstanceType<typeof ElTree>>();
-
-let highlightMap = ref({});
+const buttonClass = computed(() => {
+  return [
+    "!h-[20px]",
+    "!text-sm",
+    "reset-margin",
+    "!text-[var(--el-text-color-regular)]",
+    "dark:!text-white",
+    "dark:hover:!text-primary"
+  ];
+});
 
 const filterNode = (value: string, data: Tree) => {
   if (!value) return true;
@@ -42,18 +63,24 @@ function nodeClick(value) {
       v.highlight = false;
     }
   });
+  emit(
+    "tree-select",
+    highlightMap.value[nodeId]?.highlight
+      ? Object.assign({ ...value, selected: true })
+      : Object.assign({ ...value, selected: false })
+  );
 }
 
 function toggleRowExpansionAll(status) {
-  // @ts-expect-error
-  let nodes = proxy.$refs["treeRef"].store._getAllNodes();
-  for (var i = 0; i < nodes.length; i++) {
+  isExpand.value = status;
+  const nodes = (proxy.$refs["treeRef"] as any).store._getAllNodes();
+  for (let i = 0; i < nodes.length; i++) {
     nodes[i].expanded = status;
   }
 }
 
-// 重置状态（选中状态、搜索框值、树初始化）
-function onReset() {
+/** 重置部门树状态（选中状态、搜索框值、树初始化） */
+function onTreeReset() {
   highlightMap.value = {};
   searchValue.value = "";
   toggleRowExpansionAll(true);
@@ -63,22 +90,20 @@ watch(searchValue, val => {
   treeRef.value!.filter(val);
 });
 
-onMounted(async () => {
-  let { data } = await getDeptList();
-  treeData.value = handleTree(data);
-});
+defineExpose({ onTreeReset });
 </script>
 
 <template>
-  <div class="max-w-260px h-full min-h-780px bg-white">
-    <div class="flex items-center h-34px">
-      <p class="flex-1 ml-2 font-bold text-base truncate" title="部门列表">
-        部门列表
-      </p>
+  <div
+    v-loading="treeLoading"
+    class="h-full bg-bg_color overflow-hidden relative"
+    :style="{ minHeight: `calc(100vh - 141px)` }"
+  >
+    <div class="flex items-center h-[34px]">
       <el-input
-        style="flex: 2"
-        size="small"
         v-model="searchValue"
+        class="ml-2"
+        size="small"
         placeholder="请输入部门名称"
         clearable
       >
@@ -86,105 +111,105 @@ onMounted(async () => {
           <el-icon class="el-input__icon">
             <IconifyIconOffline
               v-show="searchValue.length === 0"
-              icon="search"
+              icon="ri:search-line"
             />
           </el-icon>
         </template>
       </el-input>
-      <el-dropdown>
+      <el-dropdown :hide-on-click="false">
         <IconifyIconOffline
-          class="w-28px cursor-pointer"
+          class="w-[28px] cursor-pointer"
           width="18px"
-          icon="more-vertical"
+          :icon="More2Fill"
         />
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item>
               <el-button
-                class="reset-margin !h-20px !text-gray-500"
+                :class="buttonClass"
                 link
                 type="primary"
-                :icon="useRenderIcon('expand')"
-                @click="toggleRowExpansionAll(true)"
+                :icon="useRenderIcon(isExpand ? ExpandIcon : UnExpandIcon)"
+                @click="toggleRowExpansionAll(isExpand ? false : true)"
               >
-                展开全部
+                {{ isExpand ? "折叠全部" : "展开全部" }}
               </el-button>
             </el-dropdown-item>
-            <el-dropdown-item>
+            <!-- <el-dropdown-item>
               <el-button
-                class="reset-margin !h-20px !text-gray-500"
+                :class="buttonClass"
                 link
                 type="primary"
-                :icon="useRenderIcon('unExpand')"
-                @click="toggleRowExpansionAll(false)"
-              >
-                折叠全部
-              </el-button>
-            </el-dropdown-item>
-            <el-dropdown-item>
-              <el-button
-                class="reset-margin !h-20px !text-gray-500"
-                link
-                type="primary"
-                :icon="useRenderIcon('reset')"
-                @click="onReset"
+                :icon="useRenderIcon(Reset)"
+                @click="onTreeReset"
               >
                 重置状态
               </el-button>
-            </el-dropdown-item>
+            </el-dropdown-item> -->
           </el-dropdown-menu>
         </template>
       </el-dropdown>
     </div>
     <el-divider />
-    <el-tree
-      ref="treeRef"
-      :data="treeData"
-      node-key="id"
-      size="small"
-      :props="defaultProps"
-      default-expand-all
-      :expand-on-click-node="false"
-      :filter-node-method="filterNode"
-      @node-click="nodeClick"
-    >
-      <template #default="{ node, data }">
-        <span
-          :class="[
-            'pl-1',
-            'pr-1',
-            'rounded',
-            'flex',
-            'items-center',
-            'select-none',
-            searchValue.trim().length > 0 &&
-              node.label.includes(searchValue) &&
-              'text-red-500'
-          ]"
-          :style="{
-            background: highlightMap[node.id]?.highlight
-              ? 'var(--el-color-primary-light-7)'
-              : 'transparent'
-          }"
-        >
-          <IconifyIconOffline
-            :icon="
-              data.type === 1
-                ? 'office-building'
-                : data.type === 2
-                ? 'location-company'
-                : 'dept'
-            "
-          />
-          {{ node.label }}
-        </span>
-      </template>
-    </el-tree>
+    <el-scrollbar height="calc(90vh - 88px)">
+      <el-tree
+        ref="treeRef"
+        :data="treeData"
+        node-key="id"
+        size="small"
+        :props="defaultProps"
+        default-expand-all
+        :expand-on-click-node="false"
+        :filter-node-method="filterNode"
+        @node-click="nodeClick"
+      >
+        <template #default="{ node, data }">
+          <div
+            :class="[
+              'rounded',
+              'flex',
+              'items-center',
+              'select-none',
+              'hover:text-primary',
+              searchValue.trim().length > 0 &&
+                node.label.includes(searchValue) &&
+                'text-red-500',
+              highlightMap[node.id]?.highlight ? 'dark:text-primary' : ''
+            ]"
+            :style="{
+              color: highlightMap[node.id]?.highlight
+                ? 'var(--el-color-primary)'
+                : '',
+              background: highlightMap[node.id]?.highlight
+                ? 'var(--el-color-primary-light-7)'
+                : 'transparent'
+            }"
+          >
+            <IconifyIconOffline
+              :icon="
+                data.type === 1
+                  ? OfficeBuilding
+                  : data.type === 2
+                    ? LocationCompany
+                    : Dept
+              "
+            />
+            <span class="!w-[120px] !truncate" :title="node.label">
+              {{ node.label }}
+            </span>
+          </div>
+        </template>
+      </el-tree>
+    </el-scrollbar>
   </div>
 </template>
 
 <style lang="scss" scoped>
 :deep(.el-divider) {
   margin: 0;
+}
+
+:deep(.el-tree) {
+  --el-tree-node-hover-bg-color: transparent;
 }
 </style>

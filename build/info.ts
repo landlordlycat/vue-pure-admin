@@ -1,64 +1,34 @@
-import { readdir, stat } from "fs";
 import type { Plugin } from "vite";
-import dayjs, { Dayjs } from "dayjs";
-import { sum } from "lodash-unified";
+import gradient from "gradient-string";
+import { getPackageSize } from "./utils";
+import dayjs, { type Dayjs } from "dayjs";
 import duration from "dayjs/plugin/duration";
-import { green, blue, bold } from "picocolors";
+import boxen, { type Options as BoxenOptions } from "boxen";
 dayjs.extend(duration);
 
-const staticPath = "dist";
-const fileListTotal: number[] = [];
+const welcomeMessage = gradient(["cyan", "magenta"]).multiline(
+  `您好! 欢迎使用 pure-admin 开源项目\n我们为您精心准备了下面两个贴心的保姆级文档\nhttps://pure-admin.cn\nhttps://pure-admin-utils.netlify.app`
+);
 
-const recursiveDirectory = (folder: string, callback: Function): void => {
-  readdir(folder, (err, files: string[]) => {
-    if (err) throw err;
-    let count = 0;
-    const checkEnd = () => {
-      ++count == files.length && callback();
-    };
-    files.forEach((item: string) => {
-      stat(folder + "/" + item, async (err, stats) => {
-        if (err) throw err;
-        if (stats.isFile()) {
-          fileListTotal.push(stats.size);
-          checkEnd();
-        } else if (stats.isDirectory()) {
-          recursiveDirectory(`${staticPath}/${item}/`, checkEnd);
-        }
-      });
-    });
-    files.length === 0 && callback();
-  });
-};
-
-const formatBytes = (a: number, b?: number): string => {
-  if (0 == a) return "0 Bytes";
-  const c = 1024,
-    d = b || 2,
-    e = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"],
-    f = Math.floor(Math.log(a) / Math.log(c));
-  return parseFloat((a / Math.pow(c, f)).toFixed(d)) + " " + e[f];
+const boxenOptions: BoxenOptions = {
+  padding: 0.5,
+  borderColor: "cyan",
+  borderStyle: "round"
 };
 
 export function viteBuildInfo(): Plugin {
   let config: { command: string };
   let startTime: Dayjs;
   let endTime: Dayjs;
+  let outDir: string;
   return {
     name: "vite:buildInfo",
-    configResolved(resolvedConfig: { command: string }) {
+    configResolved(resolvedConfig) {
       config = resolvedConfig;
+      outDir = resolvedConfig.build?.outDir ?? "dist";
     },
     buildStart() {
-      console.log(
-        bold(
-          green(
-            `👏欢迎使用${blue(
-              "[vue-pure-admin]"
-            )}，如果您感觉不错，记得点击后面链接给个star哦💖 https://github.com/xiaoxian521/vue-pure-admin`
-          )
-        )
-      );
+      console.log(boxen(welcomeMessage, boxenOptions));
       if (config.command === "build") {
         startTime = dayjs(new Date());
       }
@@ -66,18 +36,20 @@ export function viteBuildInfo(): Plugin {
     closeBundle() {
       if (config.command === "build") {
         endTime = dayjs(new Date());
-        recursiveDirectory(staticPath, () => {
-          console.log(
-            bold(
-              green(
-                `恭喜打包完成🎉（总用时${dayjs
-                  .duration(endTime.diff(startTime))
-                  .format("mm分ss秒")}，打包后的大小为${formatBytes(
-                  sum(fileListTotal)
-                )}）`
+        getPackageSize({
+          folder: outDir,
+          callback: (size: string) => {
+            console.log(
+              boxen(
+                gradient(["cyan", "magenta"]).multiline(
+                  `🎉 恭喜打包完成（总用时${dayjs
+                    .duration(endTime.diff(startTime))
+                    .format("mm分ss秒")}，打包后的大小为${size}）`
+                ),
+                boxenOptions
               )
-            )
-          );
+            );
+          }
         });
       }
     }

@@ -1,18 +1,17 @@
 import {
+  type PropType,
   ref,
   unref,
   watch,
   nextTick,
   computed,
-  PropType,
   defineComponent
 } from "vue";
 import "./index.scss";
-import { cloneDeep } from "lodash-unified";
-import { isString } from "@pureadmin/utils";
-import { propTypes } from "/@/utils/propTypes";
-import { IconifyIconOffline } from "../../ReIcon";
-import QRCode, { QRCodeRenderersOptions } from "qrcode";
+import propTypes from "@/utils/propTypes";
+import { isString, cloneDeep } from "@pureadmin/utils";
+import QRCode, { type QRCodeRenderersOptions } from "qrcode";
+import RefreshRight from "@iconify-icons/ep/refresh-right";
 
 interface QrcodeLogo {
   src?: string;
@@ -78,7 +77,7 @@ export default defineComponent({
         const _width: number = await getOriginWidth(unref(renderText), options);
         options.scale =
           props.width === 0 ? undefined : (props.width / _width) * 4;
-        const canvasRef: HTMLCanvasElement = await toCanvas(
+        const canvasRef: any = await toCanvas(
           unref(wrapRef) as HTMLCanvasElement,
           unref(renderText),
           options
@@ -97,7 +96,7 @@ export default defineComponent({
           width: props.width,
           ...options
         });
-        (unref(wrapRef) as HTMLImageElement).src = url;
+        (unref(wrapRef) as any).src = url;
         emit("done", url);
         loading.value = false;
       }
@@ -245,9 +244,9 @@ export default defineComponent({
               onClick={disabledClick}
             >
               <div class="absolute top-[50%] left-[50%] font-bold">
-                <IconifyIconOffline
-                  class="cursor-pointer outline-none"
-                  icon="refresh-right"
+                <iconify-icon-offline
+                  class="cursor-pointer"
+                  icon={RefreshRight}
                   width="30"
                   color="var(--el-color-primary)"
                 />

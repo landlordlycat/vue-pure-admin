@@ -1,57 +1,36 @@
 <script setup lang="ts">
-import { useColumns } from "./columns";
-import { handleTree } from "@pureadmin/utils";
-import { getDeptList } from "/@/api/system";
-import { FormInstance } from "element-plus";
-import { reactive, ref, onMounted } from "vue";
-import { TableProBar } from "/@/components/ReTable";
-import { useRenderIcon } from "/@/components/ReIcon/src/hooks";
+import { ref } from "vue";
+import { useDept } from "./utils/hook";
+import { PureTableBar } from "@/components/RePureTableBar";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+
+import Delete from "@iconify-icons/ep/delete";
+import EditPen from "@iconify-icons/ep/edit-pen";
+import Refresh from "@iconify-icons/ep/refresh";
+import AddFill from "@iconify-icons/ri/add-circle-line";
 
 defineOptions({
-  name: "Dept"
+  name: "SystemDept"
 });
 
-const form = reactive({
-  user: "",
-  status: ""
-});
-let dataList = ref([]);
-let loading = ref(true);
-const { columns } = useColumns();
-
-const formRef = ref<FormInstance>();
+const formRef = ref();
 const tableRef = ref();
+const {
+  form,
+  loading,
+  columns,
+  dataList,
+  onSearch,
+  resetForm,
+  openDialog,
+  handleDelete,
+  handleSelectionChange
+} = useDept();
 
-function handleUpdate(row) {
-  console.log(row);
+function onFullscreen() {
+  // 重置表格高度
+  tableRef.value.setAdaptive();
 }
-
-function handleDelete(row) {
-  console.log(row);
-}
-
-function handleSelectionChange(val) {
-  console.log("handleSelectionChange", val);
-}
-
-async function onSearch() {
-  loading.value = true;
-  let { data } = await getDeptList();
-  dataList.value = handleTree(data);
-  setTimeout(() => {
-    loading.value = false;
-  }, 500);
-}
-
-const resetForm = (formEl: FormInstance | undefined) => {
-  if (!formEl) return;
-  formEl.resetFields();
-  onSearch();
-};
-
-onMounted(() => {
-  onSearch();
-});
 </script>
 
 <template>
@@ -60,57 +39,76 @@ onMounted(() => {
       ref="formRef"
       :inline="true"
       :model="form"
-      class="bg-white w-99/100 pl-8 pt-4"
+      class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px] overflow-auto"
     >
-      <el-form-item label="部门名称：" prop="user">
-        <el-input v-model="form.user" placeholder="请输入部门名称" clearable />
+      <el-form-item label="部门名称：" prop="name">
+        <el-input
+          v-model="form.name"
+          placeholder="请输入部门名称"
+          clearable
+          class="!w-[180px]"
+        />
       </el-form-item>
       <el-form-item label="状态：" prop="status">
-        <el-select v-model="form.status" placeholder="请选择状态" clearable>
-          <el-option label="开启" value="1" />
-          <el-option label="关闭" value="0" />
+        <el-select
+          v-model="form.status"
+          placeholder="请选择状态"
+          clearable
+          class="!w-[180px]"
+        >
+          <el-option label="启用" :value="1" />
+          <el-option label="停用" :value="0" />
         </el-select>
       </el-form-item>
       <el-form-item>
         <el-button
           type="primary"
-          :icon="useRenderIcon('search')"
+          :icon="useRenderIcon('ri:search-line')"
           :loading="loading"
           @click="onSearch"
         >
           搜索
         </el-button>
-        <el-button :icon="useRenderIcon('refresh')" @click="resetForm(formRef)">
+        <el-button :icon="useRenderIcon(Refresh)" @click="resetForm(formRef)">
           重置
         </el-button>
       </el-form-item>
     </el-form>
 
-    <TableProBar
-      title="部门列表"
-      :loading="loading"
+    <PureTableBar
+      title="部门管理（仅演示，操作后不生效）"
+      :columns="columns"
       :tableRef="tableRef?.getTableRef()"
-      :dataList="dataList"
       @refresh="onSearch"
+      @fullscreen="onFullscreen"
     >
       <template #buttons>
-        <el-button type="primary" :icon="useRenderIcon('add')">
+        <el-button
+          type="primary"
+          :icon="useRenderIcon(AddFill)"
+          @click="openDialog()"
+        >
           新增部门
         </el-button>
       </template>
-      <template v-slot="{ size, checkList }">
-        <PureTable
+      <template v-slot="{ size, dynamicColumns }">
+        <pure-table
           ref="tableRef"
-          border
-          align="center"
+          adaptive
+          :adaptiveConfig="{ offsetBottom: 45 }"
+          align-whole="center"
           row-key="id"
+          showOverflowTooltip
           table-layout="auto"
           default-expand-all
+          :loading="loading"
           :size="size"
           :data="dataList"
-          :columns="columns"
-          :checkList="checkList"
-          :header-cell-style="{ background: '#fafafa', color: '#606266' }"
+          :columns="dynamicColumns"
+          :header-cell-style="{
+            background: 'var(--el-fill-color-light)',
+            color: 'var(--el-text-color-primary)'
+          }"
           @selection-change="handleSelectionChange"
         >
           <template #operation="{ row }">
@@ -119,28 +117,56 @@ onMounted(() => {
               link
               type="primary"
               :size="size"
-              @click="handleUpdate(row)"
-              :icon="useRenderIcon('edits')"
+              :icon="useRenderIcon(EditPen)"
+              @click="openDialog('修改', row)"
             >
               修改
             </el-button>
-            <el-popconfirm title="是否确认删除?">
+            <el-button
+              class="reset-margin"
+              link
+              type="primary"
+              :size="size"
+              :icon="useRenderIcon(AddFill)"
+              @click="openDialog('新增', { parentId: row.id } as any)"
+            >
+              新增
+            </el-button>
+            <el-popconfirm
+              :title="`是否确认删除部门名称为${row.name}的这条数据`"
+              @confirm="handleDelete(row)"
+            >
               <template #reference>
                 <el-button
                   class="reset-margin"
                   link
                   type="primary"
                   :size="size"
-                  :icon="useRenderIcon('delete')"
-                  @click="handleDelete(row)"
+                  :icon="useRenderIcon(Delete)"
                 >
                   删除
                 </el-button>
               </template>
             </el-popconfirm>
           </template>
-        </PureTable>
+        </pure-table>
       </template>
-    </TableProBar>
+    </PureTableBar>
   </div>
 </template>
+
+<style lang="scss" scoped>
+:deep(.el-table__inner-wrapper::before) {
+  height: 0;
+}
+
+.main-content {
+  margin: 24px 24px 0 !important;
+}
+
+.search-form {
+  :deep(.el-form-item) {
+    margin-bottom: 12px;
+  }
+}
+</style>

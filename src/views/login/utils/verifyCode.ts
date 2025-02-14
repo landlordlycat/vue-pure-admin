@@ -1,11 +1,10 @@
 import type { FormInstance, FormItemProp } from "element-plus";
-import { cloneDeep } from "lodash-unified";
+import { clone } from "@pureadmin/utils";
 import { ref } from "vue";
 
 const isDisabled = ref(false);
-const TEXT = "获取验证码";
 const timer = ref(null);
-const text = ref(TEXT);
+const text = ref("");
 
 export const useVerifyCode = () => {
   const start = async (
@@ -14,17 +13,18 @@ export const useVerifyCode = () => {
     time = 60
   ) => {
     if (!formEl) return;
-    const initTime = cloneDeep(time);
+    const initTime = clone(time, true);
     await formEl.validateField(props, isValid => {
       if (isValid) {
         clearInterval(timer.value);
+        isDisabled.value = true;
+        text.value = `${time}`;
         timer.value = setInterval(() => {
           if (time > 0) {
-            text.value = `${time}秒后重新获取`;
-            isDisabled.value = true;
             time -= 1;
+            text.value = `${time}`;
           } else {
-            text.value = TEXT;
+            text.value = "";
             isDisabled.value = false;
             clearInterval(timer.value);
             time = initTime;
@@ -35,7 +35,7 @@ export const useVerifyCode = () => {
   };
 
   const end = () => {
-    text.value = TEXT;
+    text.value = "";
     isDisabled.value = false;
     clearInterval(timer.value);
   };

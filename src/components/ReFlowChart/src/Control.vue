@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, unref, onMounted } from "vue";
-import { templateRef } from "@vueuse/core";
 import { LogicFlow } from "@logicflow/core";
 
 interface Props {
@@ -16,11 +15,11 @@ const emit = defineEmits<{
   (e: "catData"): void;
 }>();
 
-const controlButton3 = templateRef<HTMLElement | any>("controlButton3", null);
-const controlButton4 = templateRef<HTMLElement | any>("controlButton4", null);
+const controlButton3 = ref();
+const controlButton4 = ref();
 
-let focusIndex = ref<Number>(-1);
-let titleLists = ref([
+const focusIndex = ref<Number>(-1);
+const titleLists = ref([
   {
     icon: "icon-zoom-out-hs",
     text: "缩小",
@@ -68,7 +67,7 @@ let titleLists = ref([
 const onControl = (item, key) => {
   ["zoom", "zoom", "resetZoom", "undo", "redo", "getSnapshot"].forEach(
     (v, i) => {
-      let domControl = props.lf;
+      const domControl = props.lf;
       if (key === 1) {
         domControl.zoom(true);
       }
@@ -102,39 +101,38 @@ onMounted(() => {
         v-for="(item, key) in titleLists"
         :key="key"
         :title="item.text"
+        class="dark:text-bg_color"
         @mouseenter.prevent="onEnter(key)"
         @mouseleave.prevent="focusIndex = -1"
       >
-        <el-tooltip
-          :content="item.text"
-          :visible="focusIndex === key"
-          placement="right"
+        <button
+          :ref="'controlButton' + key"
+          v-tippy="{
+            content: item.text
+          }"
+          :disabled="item.disabled"
+          :style="{
+            cursor: item.disabled === false ? 'pointer' : 'not-allowed',
+            color: item.disabled === false ? '' : '#00000040',
+            background: 'transparent'
+          }"
+          @click="onControl(item, key)"
         >
-          <button
-            :ref="'controlButton' + key"
-            :disabled="item.disabled"
-            :style="{
-              cursor: item.disabled === false ? 'pointer' : 'not-allowed',
-              color: item.disabled === false ? '' : '#00000040'
-            }"
-            @click="onControl(item, key)"
-          >
-            <span
-              :class="'iconfont ' + item.icon"
-              :style="{ fontSize: `${item.size}px` }"
-            />
-          </button>
-        </el-tooltip>
+          <span
+            :class="'iconfont ' + item.icon"
+            :style="{ fontSize: `${item.size}px` }"
+          />
+        </button>
       </li>
     </ul>
   </div>
 </template>
 
 <style scoped>
-@import "./assets/iconfont/iconfont.css";
+@import url("./assets/iconfont/iconfont.css");
 
 .control-container {
-  background: hsla(0, 0%, 100%, 0.8);
+  background: hsl(0deg 0% 100% / 80%);
   box-shadow: 0 1px 4px rgb(0 0 0 / 20%);
 }
 

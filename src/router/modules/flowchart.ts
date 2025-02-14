@@ -1,25 +1,22 @@
-import { $t } from "/@/plugins/i18n";
-const Layout = () => import("/@/layout/index.vue");
+import { $t } from "@/plugins/i18n";
+import { flowchart } from "@/router/enums";
 
-const flowChartRouter = {
-  path: "/flowChart",
-  component: Layout,
-  redirect: "/flowChart/index",
+export default {
+  path: "/flow-chart",
+  redirect: "/flow-chart/index",
   meta: {
-    icon: "set-up",
-    title: $t("menus.hsflowChart"),
-    rank: 1
+    icon: "ep:set-up",
+    title: $t("menus.pureFlowChart"),
+    rank: flowchart
   },
   children: [
     {
-      path: "/flowChart/index",
+      path: "/flow-chart/index",
       name: "FlowChart",
-      component: () => import("/@/views/flow-chart/index.vue"),
+      component: () => import("@/views/flow-chart/index.vue"),
       meta: {
-        title: $t("menus.hsflowChart")
+        title: $t("menus.pureFlowChart")
       }
     }
   ]
-};
-
-export default flowChartRouter;
+} satisfies RouteConfigsTable;

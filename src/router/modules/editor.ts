@@ -1,26 +1,23 @@
-import { $t } from "/@/plugins/i18n";
-const Layout = () => import("/@/layout/index.vue");
+import { $t } from "@/plugins/i18n";
+import { editor } from "@/router/enums";
 
-const editorRouter = {
+export default {
   path: "/editor",
-  component: Layout,
   redirect: "/editor/index",
   meta: {
-    icon: "edit",
-    title: $t("menus.hseditor"),
-    rank: 2
+    icon: "ep:edit",
+    title: $t("menus.pureEditor"),
+    rank: editor
   },
   children: [
     {
       path: "/editor/index",
       name: "Editor",
-      component: () => import("/@/views/editor/index.vue"),
+      component: () => import("@/views/editor/index.vue"),
       meta: {
-        title: $t("menus.hseditor"),
+        title: $t("menus.pureEditor"),
         keepAlive: true
       }
     }
   ]
-};
-
-export default editorRouter;
+} satisfies RouteConfigsTable;

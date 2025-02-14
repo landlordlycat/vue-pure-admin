@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { getCardList } from "/@/api/list";
-import Card from "./components/Card.vue";
+import { getCardList } from "@/api/list";
+import { message } from "@/utils/message";
+import { ElMessageBox } from "element-plus";
 import { ref, onMounted, nextTick } from "vue";
-import dialogForm from "./components/DialogForm.vue";
-import { ElMessage, ElMessageBox } from "element-plus";
-import { useRenderIcon } from "/@/components/ReIcon/src/hooks";
+import ListCard from "./components/ListCard.vue";
+import ListDialogForm from "./components/ListDialogForm.vue";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import AddFill from "@iconify-icons/ri/add-circle-line";
 
 defineOptions({
-  name: "ListCard"
+  name: "CardList"
 });
 
 const svg = `
@@ -77,10 +79,7 @@ const handleDeleteItem = product => {
     }
   )
     .then(() => {
-      ElMessage({
-        type: "success",
-        message: "删除成功"
-      });
+      message("删除成功", { type: "success" });
     })
     .catch(() => {});
 };
@@ -93,14 +92,17 @@ const handleManageProduct = product => {
 </script>
 
 <template>
-  <div class="main">
+  <div>
     <div class="w-full flex justify-between mb-4">
-      <el-button :icon="useRenderIcon('add')" @click="formDialogVisible = true">
+      <el-button
+        :icon="useRenderIcon(AddFill)"
+        @click="formDialogVisible = true"
+      >
         新建产品
       </el-button>
       <el-input
-        style="width: 300px"
         v-model="searchValue"
+        style="width: 300px"
         placeholder="请输入产品名称"
         clearable
       >
@@ -108,7 +110,7 @@ const handleManageProduct = product => {
           <el-icon class="el-input__icon">
             <IconifyIconOffline
               v-show="searchValue.length === 0"
-              icon="search"
+              icon="ri:search-line"
             />
           </el-icon>
         </template>
@@ -120,7 +122,6 @@ const handleManageProduct = product => {
       element-loading-svg-view-box="-10, -10, 50, 50"
     >
       <el-empty
-        description="暂无数据"
         v-show="
           productList
             .slice(
@@ -131,6 +132,7 @@ const handleManageProduct = product => {
               v.name.toLowerCase().includes(searchValue.toLowerCase())
             ).length === 0
         "
+        :description="`${searchValue} 产品不存在`"
       />
       <template v-if="pagination.total > 0">
         <el-row :gutter="16">
@@ -150,7 +152,7 @@ const handleManageProduct = product => {
             :lg="6"
             :xl="4"
           >
-            <Card
+            <ListCard
               :product="product"
               @delete-item="handleDeleteItem"
               @manage-product="handleManageProduct"
@@ -158,8 +160,8 @@ const handleManageProduct = product => {
           </el-col>
         </el-row>
         <el-pagination
-          class="float-right"
           v-model:currentPage="pagination.current"
+          class="float-right"
           :page-size="pagination.pageSize"
           :total="pagination.total"
           :page-sizes="[12, 24, 36]"
@@ -170,6 +172,6 @@ const handleManageProduct = product => {
         />
       </template>
     </div>
-    <dialogForm v-model:visible="formDialogVisible" :data="formData" />
+    <ListDialogForm v-model:visible="formDialogVisible" :data="formData" />
   </div>
 </template>

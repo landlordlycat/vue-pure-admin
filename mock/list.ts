@@ -1,12 +1,12 @@
-import { MockMethod } from "vite-plugin-mock";
+import { defineFakeRoute } from "vite-plugin-fake-server/client";
 
-export default [
+export default defineFakeRoute([
   {
-    url: "/getCardList",
+    url: "/get-card-list",
     method: "post",
     response: () => {
       return {
-        code: 0,
+        success: true,
         data: {
           list: [
             {
@@ -452,4 +452,4 @@ export default [
       };
     }
   }
-] as MockMethod[];
+]);

@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { clone } from "@pureadmin/utils";
 import type { ElTreeV2 } from "element-plus";
-import { transformI18n } from "/@/plugins/i18n";
-import { useRenderIcon } from "/@/components/ReIcon/src/hooks";
-import { extractPathList, deleteChildren } from "@pureadmin/utils";
-import { usePermissionStoreHook } from "/@/store/modules/permission";
+import { transformI18n } from "@/plugins/i18n";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import { extractPathList, deleteChildren } from "@/utils/tree";
+import { usePermissionStoreHook } from "@/store/modules/permission";
 import type { TreeNode } from "element-plus/es/components/tree-v2/src/types";
+import NodeTree from "@iconify-icons/ri/node-tree";
 
 defineOptions({
   name: "MenuTree"
@@ -18,21 +20,21 @@ interface treeNode extends TreeNode {
 }
 
 const query = ref("");
-let dataProps = ref({
+const dataProps = ref({
   value: "uniqueId",
   children: "children"
 });
 const treeRef = ref<InstanceType<typeof ElTreeV2>>();
+const menusTree = clone(usePermissionStoreHook().wholeMenus, true);
 
-let menusData = computed(() => {
-  return deleteChildren(usePermissionStoreHook().menusTree);
+const menusData = computed(() => {
+  return deleteChildren(menusTree);
 });
 
-let expandedKeys = extractPathList(menusData.value);
+const expandedKeys = extractPathList(menusData.value);
 
 const onQueryChanged = (query: string) => {
-  // @ts-expect-error
-  treeRef.value!.filter(query);
+  (treeRef as any).value!.filter(query);
 };
 
 const filterMethod = (query: string, node: treeNode) => {
@@ -41,26 +43,33 @@ const filterMethod = (query: string, node: treeNode) => {
 </script>
 
 <template>
-  <el-card>
+  <el-card shadow="never">
     <template #header>
       <div class="card-header">
         <span class="font-medium">
-          菜单树结构（采用element-plus的
+          菜单树结构（采用 Element Plus 的
           <el-link
             href="https://element-plus.gitee.io/zh-CN/component/tree-v2.html"
             target="_blank"
-            :icon="useRenderIcon('node-tree')"
-            style="font-size: 16px; margin: 0 5px 4px 0"
+            :icon="useRenderIcon(NodeTree)"
+            style="margin: 0 5px 4px 0; font-size: 16px"
           >
             Tree V2
           </el-link>
           组件并支持国际化）
         </span>
       </div>
+      <el-link
+        class="mt-2"
+        href="https://github.com/pure-admin/vue-pure-admin/blob/main/src/views/able/menu-tree.vue"
+        target="_blank"
+      >
+        代码位置 src/views/able/menu-tree.vue
+      </el-link>
     </template>
     <el-input
-      class="mb-4"
       v-model="query"
+      class="mb-4"
       placeholder="请输入关键字查找"
       clearable
       @input="onQueryChanged"

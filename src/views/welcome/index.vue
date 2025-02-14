@@ -1,56 +1,43 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import Bar from "./components/Bar.vue";
-import Pie from "./components/Pie.vue";
-import Line from "./components/Line.vue";
-import avatars from "/@/assets/avatars.jpg";
-import Github from "./components/Github.vue";
-import Infinite from "./components/Infinite.vue";
+import { ref, markRaw } from "vue";
+import ReCol from "@/components/ReCol";
+import { useDark, randomGradient } from "./utils";
+import WelcomeTable from "./components/table/index.vue";
+import { ReNormalCountTo } from "@/components/ReCountTo";
+import { useRenderFlicker } from "@/components/ReFlicker";
+import { ChartBar, ChartLine, ChartRound } from "./components/charts";
+import Segmented, { type OptionsType } from "@/components/ReSegmented";
+import { chartData, barChartData, progressData, latestNewsData } from "./data";
 
 defineOptions({
   name: "Welcome"
 });
 
-const date: Date = new Date();
-let loading = ref<boolean>(true);
+const { isDark } = useDark();
 
-setTimeout(() => {
-  loading.value = !loading.value;
-}, 800);
-
-let greetings = computed(() => {
-  if (date.getHours() >= 0 && date.getHours() < 12) {
-    return "上午阳光明媚，祝你薪水翻倍🌞！";
-  } else if (date.getHours() >= 12 && date.getHours() < 18) {
-    return "下午小风娇好，愿你青春不老😃！";
-  } else {
-    return "折一根天使羽毛，愿拂去您的疲惫烦恼忧伤🌛！";
+let curWeek = ref(1); // 0上周、1本周
+const optionsBasis: Array<OptionsType> = [
+  {
+    label: "上周"
+  },
+  {
+    label: "本周"
   }
-});
-
-const openDepot = (): void => {
-  window.open("https://github.com/xiaoxian521/vue-pure-admin");
-};
+];
 </script>
 
 <template>
-  <div class="welcome">
-    <el-card class="top-content">
-      <div class="left-mark">
-        <img :src="avatars" title="直达仓库地址" @click="openDepot" />
-        <span>{{ greetings }}</span>
-      </div>
-    </el-card>
-
-    <el-row :gutter="24" style="margin: 20px">
-      <el-col
-        :xs="24"
-        :sm="24"
-        :md="12"
-        :lg="12"
-        :xl="12"
-        style="margin-bottom: 20px"
+  <div>
+    <el-row :gutter="24" justify="space-around">
+      <re-col
+        v-for="(item, index) in chartData"
+        :key="index"
         v-motion
+        class="mb-[18px]"
+        :value="6"
+        :md="12"
+        :sm="12"
+        :xs="24"
         :initial="{
           opacity: 0,
           y: 100
@@ -59,64 +46,54 @@ const openDepot = (): void => {
           opacity: 1,
           y: 0,
           transition: {
-            delay: 200
+            delay: 80 * (index + 1)
           }
         }"
       >
-        <el-card style="height: 360px">
-          <template #header>
-            <span style="font-size: 16px; font-weight: 500">GitHub信息</span>
-          </template>
-          <el-skeleton animated :rows="7" :loading="loading">
-            <template #default>
-              <Github />
-            </template>
-          </el-skeleton>
-        </el-card>
-      </el-col>
-
-      <el-col
-        :xs="24"
-        :sm="24"
-        :md="12"
-        :lg="12"
-        :xl="12"
-        style="margin-bottom: 20px"
-        v-motion
-        :initial="{
-          opacity: 0,
-          y: 100
-        }"
-        :enter="{
-          opacity: 1,
-          y: 0,
-          transition: {
-            delay: 200
-          }
-        }"
-      >
-        <el-card style="height: 360px">
-          <template #header>
-            <span style="font-size: 16px; font-weight: 500">
-              GitHub滚动信息
+        <el-card class="line-card" shadow="never">
+          <div class="flex justify-between">
+            <span class="text-md font-medium">
+              {{ item.name }}
             </span>
-          </template>
-          <el-skeleton animated :rows="7" :loading="loading">
-            <template #default>
-              <Infinite />
-            </template>
-          </el-skeleton>
+            <div
+              class="w-8 h-8 flex justify-center items-center rounded-md"
+              :style="{
+                backgroundColor: isDark ? 'transparent' : item.bgColor
+              }"
+            >
+              <IconifyIconOffline
+                :icon="item.icon"
+                :color="item.color"
+                width="18"
+              />
+            </div>
+          </div>
+          <div class="flex justify-between items-start mt-3">
+            <div class="w-1/2">
+              <ReNormalCountTo
+                :duration="item.duration"
+                :fontSize="'1.6em'"
+                :startVal="100"
+                :endVal="item.value"
+              />
+              <p class="font-medium text-green-500">{{ item.percent }}</p>
+            </div>
+            <ChartLine
+              v-if="item.data.length > 1"
+              class="!w-1/2"
+              :color="item.color"
+              :data="item.data"
+            />
+            <ChartRound v-else class="!w-1/2" />
+          </div>
         </el-card>
-      </el-col>
+      </re-col>
 
-      <el-col
-        :xs="24"
-        :sm="24"
-        :md="12"
-        :lg="8"
-        :xl="8"
-        style="margin-bottom: 20px"
+      <re-col
         v-motion
+        class="mb-[18px]"
+        :value="18"
+        :xs="24"
         :initial="{
           opacity: 0,
           y: 100
@@ -129,28 +106,25 @@ const openDepot = (): void => {
           }
         }"
       >
-        <el-card>
-          <template #header>
-            <span style="font-size: 16px; font-weight: 500">
-              GitHub饼图信息
-            </span>
-          </template>
-          <el-skeleton animated :rows="7" :loading="loading">
-            <template #default>
-              <Pie />
-            </template>
-          </el-skeleton>
+        <el-card class="bar-card" shadow="never">
+          <div class="flex justify-between">
+            <span class="text-md font-medium">分析概览</span>
+            <Segmented v-model="curWeek" :options="optionsBasis" />
+          </div>
+          <div class="flex justify-between items-start mt-3">
+            <ChartBar
+              :requireData="barChartData[curWeek].requireData"
+              :questionData="barChartData[curWeek].questionData"
+            />
+          </div>
         </el-card>
-      </el-col>
+      </re-col>
 
-      <el-col
-        :xs="24"
-        :sm="24"
-        :md="12"
-        :lg="8"
-        :xl="8"
-        style="margin-bottom: 20px"
+      <re-col
         v-motion
+        class="mb-[18px]"
+        :value="6"
+        :xs="24"
         :initial="{
           opacity: 0,
           y: 100
@@ -159,32 +133,45 @@ const openDepot = (): void => {
           opacity: 1,
           y: 0,
           transition: {
-            delay: 400
+            delay: 480
           }
         }"
       >
-        <el-card>
-          <template #header>
-            <span style="font-size: 16px; font-weight: 500">
-              GitHub折线图信息
+        <el-card shadow="never">
+          <div class="flex justify-between">
+            <span class="text-md font-medium">解决概率</span>
+          </div>
+          <div
+            v-for="(item, index) in progressData"
+            :key="index"
+            :class="[
+              'flex',
+              'justify-between',
+              'items-start',
+              index === 0 ? 'mt-8' : 'mt-[2.15rem]'
+            ]"
+          >
+            <el-progress
+              :text-inside="true"
+              :percentage="item.percentage"
+              :stroke-width="21"
+              :color="item.color"
+              striped
+              striped-flow
+              :duration="item.duration"
+            />
+            <span class="text-nowrap ml-2 text-text_color_regular text-sm">
+              {{ item.week }}
             </span>
-          </template>
-          <el-skeleton animated :rows="7" :loading="loading">
-            <template #default>
-              <Line />
-            </template>
-          </el-skeleton>
+          </div>
         </el-card>
-      </el-col>
+      </re-col>
 
-      <el-col
-        :xs="24"
-        :sm="24"
-        :md="24"
-        :lg="8"
-        :xl="8"
-        style="margin-bottom: 20px"
+      <re-col
         v-motion
+        class="mb-[18px]"
+        :value="18"
+        :xs="24"
         :initial="{
           opacity: 0,
           y: 100
@@ -193,65 +180,97 @@ const openDepot = (): void => {
           opacity: 1,
           y: 0,
           transition: {
-            delay: 400
+            delay: 560
           }
         }"
       >
-        <el-card>
-          <template #header>
-            <span style="font-size: 16px; font-weight: 500">
-              GitHub柱状图信息
-            </span>
-          </template>
-          <el-skeleton animated :rows="7" :loading="loading">
-            <template #default>
-              <Bar />
-            </template>
-          </el-skeleton>
+        <el-card shadow="never" class="h-[580px]">
+          <div class="flex justify-between">
+            <span class="text-md font-medium">数据统计</span>
+          </div>
+          <WelcomeTable class="mt-3" />
         </el-card>
-      </el-col>
+      </re-col>
+
+      <re-col
+        v-motion
+        class="mb-[18px]"
+        :value="6"
+        :xs="24"
+        :initial="{
+          opacity: 0,
+          y: 100
+        }"
+        :enter="{
+          opacity: 1,
+          y: 0,
+          transition: {
+            delay: 640
+          }
+        }"
+      >
+        <el-card shadow="never">
+          <div class="flex justify-between">
+            <span class="text-md font-medium">最新动态</span>
+          </div>
+          <el-scrollbar max-height="504" class="mt-3">
+            <el-timeline>
+              <el-timeline-item
+                v-for="(item, index) in latestNewsData"
+                :key="index"
+                center
+                placement="top"
+                :icon="
+                  markRaw(
+                    useRenderFlicker({
+                      background: randomGradient({
+                        randomizeHue: true
+                      })
+                    })
+                  )
+                "
+                :timestamp="item.date"
+              >
+                <p class="text-text_color_regular text-sm">
+                  {{
+                    `新增 ${item.requiredNumber} 条问题，${item.resolveNumber} 条已解决`
+                  }}
+                </p>
+              </el-timeline-item>
+            </el-timeline>
+          </el-scrollbar>
+        </el-card>
+      </re-col>
     </el-row>
   </div>
 </template>
 
-<style module scoped>
-.size {
-  height: 335px;
-}
-</style>
-
 <style lang="scss" scoped>
-.main-content {
-  margin: 0 !important;
+:deep(.el-card) {
+  --el-card-border-color: none;
+
+  /* 解决概率进度条宽度 */
+  .el-progress--line {
+    width: 85%;
+  }
+
+  /* 解决概率进度条字体大小 */
+  .el-progress-bar__innerText {
+    font-size: 15px;
+  }
+
+  /* 隐藏 el-scrollbar 滚动条 */
+  .el-scrollbar__bar {
+    display: none;
+  }
+
+  /* el-timeline 每一项上下、左右边距 */
+  .el-timeline-item {
+    margin: 0 6px;
+  }
 }
 
-.welcome {
-  height: 100%;
-
-  .top-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 60px;
-    background: #fff;
-
-    .left-mark {
-      display: flex;
-      align-items: center;
-
-      img {
-        display: block;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        margin-right: 10px;
-        cursor: pointer;
-      }
-
-      span {
-        font-size: 14px;
-      }
-    }
-  }
+.main-content {
+  margin: 20px 20px 0 !important;
 }
 </style>
